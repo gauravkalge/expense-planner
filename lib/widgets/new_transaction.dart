@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function addTx;
@@ -10,25 +11,43 @@ class NewTransaction extends StatefulWidget {
 }
 
 class _NewTransactionState extends State<NewTransaction> {
-  final TextEditingController titleController = TextEditingController();
-
-  final TextEditingController amountController = TextEditingController();
-
-  void submitData() {
-    final enteredTitle = titleController.text;
-    final enteredAmount = double.parse(amountController.text);
-
-    if (enteredTitle.isEmpty || enteredAmount <= 0) {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  void _submitData() {
+     if (_amountController.text.isEmpty) {
       return;
     }
+    final enteredTitle = _titleController.text;
+    final enteredAmount = double.parse(_amountController.text);
 
+    if (enteredTitle.isEmpty || enteredAmount <= 0 || _selectedDate == null) {
+      return;
+    }
     widget.addTx(
-      titleController.text,
-      double.parse(amountController.text),
+      enteredTitle,
+      enteredAmount,
+      _selectedDate,
     );
     Navigator.of(context).pop();
-    print(titleController.text);
-    print(amountController.text);
+    print(_titleController.text);
+    print(_amountController.text);
+  }
+
+  void _presentDarePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2022),
+      lastDate: DateTime(2030),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
   }
 
   @override
@@ -50,8 +69,8 @@ class _NewTransactionState extends State<NewTransaction> {
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.blue, width: 2.0),
                   )),
-              controller: titleController,
-              onSubmitted: (_) => submitData,
+              controller: _titleController,
+              onSubmitted: (_) => _submitData,
             ),
             const SizedBox(
               height: 15,
@@ -66,16 +85,35 @@ class _NewTransactionState extends State<NewTransaction> {
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.blue, width: 2.0),
                   )),
-              controller: amountController,
+              controller: _amountController,
               keyboardType: TextInputType.number,
-              onSubmitted: (_) => submitData,
+              onSubmitted: (_) => _submitData,
             ),
-            TextButton(
-              child: const Text(
-                'Add transaction',
-                style: TextStyle(color: Colors.purple),
+            SizedBox(
+              height: 70,
+              child: Row(
+                children: [
+                  Text(_selectedDate == null
+                      ? 'no Date'
+                      : 'Picked Date:${DateFormat.yMd().format(_selectedDate)}'),
+                  TextButton(
+                    child: Text(
+                      'choose Date',
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: _presentDarePicker,
+                  )
+                ],
               ),
-              onPressed: submitData,
+            ),
+            ElevatedButton(
+              child: Text(
+                'Add transaction',
+                style: Theme.of(context).textTheme.button,
+              ),
+              onPressed: _submitData,
             )
           ],
         ),
